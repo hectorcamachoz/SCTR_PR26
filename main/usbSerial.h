@@ -1,6 +1,7 @@
 #pragma once
 
 #include "driver/uart.h"
+#include "encoder.h"
 #include "esp_check.h"
 #include <stdio.h>
 #include <string.h>
@@ -18,12 +19,22 @@ private:
       //   .uart_sclk_t = UART_SCLK_APB,
 
   };
-
   const int uart_buffer_size = 1024 * 2;
 
+  // RTOS Variables
+  TickType_t lastTick{0};
+  TaskHandle_t write_handler{nullptr};
+
+  Encoder *_encoder;
+
+  // RTOS Fucntions
+  void write_msg();
+  static void write_task(void *args);
+
 public:
-  UsbSerial();
+  UsbSerial(Encoder *encoder);
   ~UsbSerial();
+  void start_task();
   void send_string(const char *text);
   void send_int(int val);
 };

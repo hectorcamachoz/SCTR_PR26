@@ -7,7 +7,7 @@ Encoder::Encoder(unsigned char _pinA, unsigned char _pinB)
   unit_config.high_limit = 32767;
   unit_config.low_limit = -32768;
   unit_config.intr_priority = 1;
-  // unit_config.flags.accum_count = 1;
+  unit_config.flags.accum_count = 1;
   // Create counter unit
   pcnt_new_unit(&unit_config, &pcnt_unit);
 
@@ -45,12 +45,30 @@ Encoder::Encoder(unsigned char _pinA, unsigned char _pinB)
   pcnt_unit_start(pcnt_unit);
 }
 
-int Encoder::get_count() {
-  pcnt_unit_get_count(pcnt_unit, &count);
-  return count;
+void Encoder::update_task(void *args) {
+  auto *self = static_cast<Encoder *>(args);
+  self->update_count();
 }
 
+void Encoder::update_count() {
+  lastTick = xTaskGetTickCount();
+  while (1) {
+    int _tCount{0};
+    pcnt_unit_get_count(pcnt_unit, &_tCount);
+    count = _tCount;
+    vTaskDelayUntil(&lastTick, pdMS_TO_TICKS(5));
+  }
+}
+
+void Encoder::start_task() {
+  xTaskCreatePinnedToCore(&Encoder::update_task, "UPDATE_COUNT_TSK", 320, this,
+                          4, &update_handler, 0);
+}
+
+int Encoder::get_count() { return count; }
+
 Encoder::~Encoder() {
+  vTaskDelete(update_handler);
   pcnt_unit_stop(pcnt_unit);
   pcnt_unit_disable(pcnt_unit);
 }
