@@ -6,16 +6,11 @@
 #include <string.h>
 
 extern "C" void app_main(void) {
+  esp_log_level_set("*", ESP_LOG_NONE);
   // Setup
-  UsbSerial serial;
+  static UsbSerial serial;
+  serial.send_int(2);
   Encoder encoder(16, 17);
   HBridge hBridge(13, 14);
-  hBridge.turn_left(90);
-
-  int count{0};
-  while (1) {
-    count = encoder.get_count();
-    serial.send_int(count);
-    vTaskDelay(pdTICKS_TO_MS(50));
-  }
+  serial.start_write_task();
 }
