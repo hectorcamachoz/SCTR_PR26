@@ -1,2 +1,14 @@
-idf_component_register(SRCS "hbridge.cpp" "encoder.cpp" "main.cpp" "usbSerial.cpp" 
-                    INCLUDE_DIRS ".")
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "peripherials/encoder/encoder.cpp"
+        "peripherials/hbridge/hbridge.cpp"
+        "peripherials/usbserial/usbSerial.cpp"
+        "peripherials/telemetry/telemetry.cpp"
+    INCLUDE_DIRS
+        "."
+        "peripherials/encoder"
+        "peripherials/hbridge"
+        "peripherials/usbserial"
+        "peripherials/telemetry"
+)

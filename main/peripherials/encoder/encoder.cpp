@@ -7,7 +7,7 @@ Encoder::Encoder(unsigned char _pinA, unsigned char _pinB)
   unit_config.high_limit = 32767;
   unit_config.low_limit = -32768;
   unit_config.intr_priority = 1;
-  // unit_config.flags.accum_count = 1;
+  unit_config.flags.accum_count = 1;
   // Create counter unit
   pcnt_new_unit(&unit_config, &pcnt_unit);
 
@@ -40,13 +40,19 @@ Encoder::Encoder(unsigned char _pinA, unsigned char _pinB)
   pcnt_channel_set_level_action(pcnt_chan_b, PCNT_CHANNEL_LEVEL_ACTION_KEEP,
                                 PCNT_CHANNEL_LEVEL_ACTION_INVERSE);
 
+  pcnt_unit_add_watch_point(pcnt_unit, -32768);
+  pcnt_unit_add_watch_point(pcnt_unit, 32767);
+
   pcnt_unit_enable(pcnt_unit);
   pcnt_unit_clear_count(pcnt_unit);
   pcnt_unit_start(pcnt_unit);
 }
 
 int Encoder::get_count() {
-  pcnt_unit_get_count(pcnt_unit, &count);
+  int tempCount{0};
+  pcnt_unit_get_count(pcnt_unit, &tempCount);
+  count = static_cast<int32_t>(tempCount);
+  // printf("Count: %ld\n", count);
   return count;
 }
 
