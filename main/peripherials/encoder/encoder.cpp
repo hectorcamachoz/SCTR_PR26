@@ -51,9 +51,8 @@ Encoder::Encoder(unsigned char _pinA, unsigned char _pinB)
 int Encoder::get_count() {
   int tempCount{0};
   pcnt_unit_get_count(pcnt_unit, &tempCount);
-  count = static_cast<int32_t>(tempCount);
-  // printf("Count: %ld\n", count);
-  return count;
+  // printf("Count: %d\n", tempCount);
+  return tempCount;
 }
 
 Encoder::~Encoder() {

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "atomic"
 #include "encoder.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
 #include "stdint.h"
@@ -17,13 +19,14 @@ private:
   // RTOS Variables
   TickType_t lastVelTick{0};
   TaskHandle_t velHandler{nullptr};
+  QueueHandle_t velQueue{nullptr};
 
   // RTOS Functions
   static void calc_vel_task(void *arg);
   void calc_vel_loop();
 
 public:
-  Telemetry(Encoder *encoder);
+  Telemetry(Encoder *_encoder, QueueHandle_t _velQueue);
   void start_vel_task();
   int get_vel();
   ~Telemetry();

@@ -7,6 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
+#include <atomic>
 #include <stdint.h>
 
 class Encoder {
@@ -16,7 +17,6 @@ private:
   pcnt_unit_handle_t pcnt_unit = NULL;
   pcnt_channel_handle_t pcnt_chan_a = NULL;
   pcnt_channel_handle_t pcnt_chan_b = NULL;
-  int32_t count{0};
 
   // // RTOS Variables
   // TickType_t lastTick{0};

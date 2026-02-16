@@ -3,6 +3,7 @@
 #include "driver/uart.h"
 #include "esp_check.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
 #include "telemetry.h"
@@ -28,12 +29,15 @@ private:
   TickType_t lastTick{0};
   TaskFunction_t write_handler{nullptr};
 
+  // // TEMP
+  QueueHandle_t outMsgQueue{nullptr};
+
   // RTOS Functions
   static void write_task(void *arg);
   void write_task_loop();
 
 public:
-  UsbSerial(Telemetry *tel);
+  UsbSerial(QueueHandle_t outMsgQueue);
   ~UsbSerial();
   void start_write_task();
   void send_string(const char *text);

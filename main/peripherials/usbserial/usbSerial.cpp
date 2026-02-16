@@ -1,6 +1,6 @@
 #include "usbSerial.h"
 
-UsbSerial::UsbSerial(Telemetry *tel) : telemetry(tel) {
+UsbSerial::UsbSerial(QueueHandle_t _outMsgQueue) : outMsgQueue(_outMsgQueue) {
   ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
   ESP_ERROR_CHECK(uart_driver_install(uart_num, uart_buffer_size,
                                       uart_buffer_size, 0, NULL, 0));
@@ -14,7 +14,8 @@ void UsbSerial::write_task(void *arg) {
 void UsbSerial::write_task_loop() {
   lastTick = xTaskGetTickCount();
   for (;;) {
-    int vel = telemetry->get_vel();
+    float vel{0};
+    xQueueReceive(outMsgQueue, &vel, 0);
     this->send_float(vel);
     xTaskDelayUntil(&lastTick, pdMS_TO_TICKS(100));
   }

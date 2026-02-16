@@ -5,10 +5,12 @@ idf_component_register(
         "peripherials/hbridge/hbridge.cpp"
         "peripherials/usbserial/usbSerial.cpp"
         "peripherials/telemetry/telemetry.cpp"
+        "peripherials/pid/pid.cpp"
     INCLUDE_DIRS
         "."
         "peripherials/encoder"
         "peripherials/hbridge"
         "peripherials/usbserial"
         "peripherials/telemetry"
+        "peripherials/pid"
 )

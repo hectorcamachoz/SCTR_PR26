@@ -1,6 +1,7 @@
 #include "telemetry.h"
 
-Telemetry::Telemetry(Encoder *enc) : encoder(enc) {}
+Telemetry::Telemetry(Encoder *enc, QueueHandle_t vQueue)
+    : encoder(enc), velQueue(vQueue) {}
 
 void Telemetry::calc_vel_task(void *arg) {
   auto *self = static_cast<Telemetry *>(arg);
@@ -15,15 +16,17 @@ void Telemetry::calc_vel_loop() {
     int64_t cTime = esp_timer_get_time();
     int32_t currentPos = encoder->get_count();
     int64_t dt = cTime - lastVelTime;
+    float tVel = 0;
     float degrees = (currentPos - lastPos) * static_cast<float>(360.0f / 2400);
     if (dt > 0) {
       float dt_s = static_cast<float>(dt) * 1e-6f;
 
-      vel = static_cast<float>(degrees) / dt_s;
+      tVel = static_cast<float>(degrees) / dt_s;
     } else {
-      vel = 0;
+      tVel = 0;
     }
-    // printf("Velocity: %f\n", vel);
+    vel = tVel;
+    xQueueOverwrite(velQueue, &vel);
     this->lastPos = currentPos;
     this->lastVelTime = cTime;
     xTaskDelayUntil(&lastVelTick, pdMS_TO_TICKS(5));
