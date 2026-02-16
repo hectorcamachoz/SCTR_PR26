@@ -25,11 +25,24 @@ private:
   const int uart_buffer_size = 1024 * 2;
   Telemetry *telemetry{nullptr};
 
+  struct {
+    uint8_t instruction{0};
+    float value{0};
+  } inputMessage;
+
+  struct OutMsg {
+    float _vel{0};
+    float _sp{0};
+    float _error{0};
+    int8_t _op{0};
+  } outValues;
+
   // RTOS Variables
   TickType_t lastTick{0};
   TaskFunction_t write_handler{nullptr};
 
   // // TEMP
+  QueueHandle_t inMsgQueue{nullptr};
   QueueHandle_t outMsgQueue{nullptr};
 
   // RTOS Functions
@@ -37,9 +50,11 @@ private:
   void write_task_loop();
 
 public:
-  UsbSerial(QueueHandle_t outMsgQueue);
+  UsbSerial(QueueHandle_t inMsgQueue, QueueHandle_t outMsgQueue);
   ~UsbSerial();
   void start_write_task();
   void send_string(const char *text);
   void send_float(float val);
+  void send_outMsg();
+  void read_buffer();
 };

@@ -29,7 +29,7 @@ void Telemetry::calc_vel_loop() {
     xQueueOverwrite(velQueue, &vel);
     this->lastPos = currentPos;
     this->lastVelTime = cTime;
-    xTaskDelayUntil(&lastVelTick, pdMS_TO_TICKS(5));
+    xTaskDelayUntil(&lastVelTick, pdMS_TO_TICKS(1));
   }
 }
 
