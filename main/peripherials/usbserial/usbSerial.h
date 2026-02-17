@@ -37,24 +37,34 @@ private:
     int8_t _op{0};
   } outValues;
 
+  struct {
+    int32_t latMax{0};
+    int32_t latMin{0};
+    float meanJitter{0};
+    float stdJitter{0};
+  } telTaskStats;
+
   // RTOS Variables
   TickType_t lastTick{0};
   TaskFunction_t write_handler{nullptr};
 
-  // // TEMP
+  // Queues
   QueueHandle_t inMsgQueue{nullptr};
   QueueHandle_t outMsgQueue{nullptr};
+  QueueHandle_t telTaskStatsQueue{nullptr};
 
   // RTOS Functions
   static void write_task(void *arg);
   void write_task_loop();
 
 public:
-  UsbSerial(QueueHandle_t inMsgQueue, QueueHandle_t outMsgQueue);
+  UsbSerial(QueueHandle_t inMsgQueue, QueueHandle_t outMsgQueue,
+            QueueHandle_t telTaskStatsQueue);
   ~UsbSerial();
   void start_write_task();
   void send_string(const char *text);
   void send_float(float val);
   void send_outMsg();
+  void send_telTaskStats();
   void read_buffer();
 };

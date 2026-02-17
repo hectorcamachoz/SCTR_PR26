@@ -1,7 +1,9 @@
 #include "telemetry.h"
+#include "cmath"
 
-Telemetry::Telemetry(Encoder *enc, QueueHandle_t vQueue)
-    : encoder(enc), velQueue(vQueue) {}
+Telemetry::Telemetry(Encoder *enc, QueueHandle_t vQueue,
+                     QueueHandle_t statsQueue)
+    : encoder(enc), velQueue(vQueue), taskStatsQueue(statsQueue) {}
 
 void Telemetry::calc_vel_task(void *arg) {
   auto *self = static_cast<Telemetry *>(arg);
@@ -12,23 +14,68 @@ void Telemetry::calc_vel_loop() {
   lastVelTick = xTaskGetTickCount();
   lastVelTime = esp_timer_get_time();
   lastPos = encoder->get_count();
+
+  int64_t latMax = INT64_MIN;
+  int64_t latMin = INT64_MAX;
+  int32_t cLat = 0;
+  uint32_t k = 0;
+  float delta{0};
+  float delta2{0};
+  float M2{0};
+  float mean{0};
+  float stdJitter{0};
+
   for (;;) {
     int64_t cTime = esp_timer_get_time();
     int32_t currentPos = encoder->get_count();
     int64_t dt = cTime - lastVelTime;
-    float tVel = 0;
-    float degrees = (currentPos - lastPos) * static_cast<float>(360.0f / 2400);
+    float dCount = (currentPos - lastPos) / static_cast<float>(400);
     if (dt > 0) {
       float dt_s = static_cast<float>(dt) * 1e-6f;
 
-      tVel = static_cast<float>(degrees) / dt_s;
+      vel = static_cast<float>(dCount) * 60 / dt_s;
     } else {
-      tVel = 0;
+      vel = 0;
     }
-    vel = tVel;
     xQueueOverwrite(velQueue, &vel);
     this->lastPos = currentPos;
     this->lastVelTime = cTime;
+
+    int64_t endTime = esp_timer_get_time();
+    k++;
+    if (k > 5) {
+      cLat = endTime - cTime;
+      // printf("Value: %ld\n", cLat);
+
+      if (cLat > latMax)
+        latMax = cLat;
+      if (cLat < latMin)
+        latMin = cLat;
+
+      delta = cLat - mean;
+      mean += delta / k;
+      delta2 = cLat - mean;
+      M2 += delta2 * delta;
+
+      if (k % 200 == 0) {
+        stdJitter = M2 / (k - 1);
+        stdJitter = sqrtf(stdJitter);
+        taskStats.latMax = latMax;
+        taskStats.latMin = latMin;
+        taskStats.meanJitter = mean;
+        taskStats.stdJitter = stdJitter;
+        xQueueOverwrite(taskStatsQueue, &taskStats);
+      }
+    }
+
+    if (k == UINT32_MAX) {
+      k = 0;
+      delta = 0;
+      delta2 = 0;
+      M2 = 0;
+      mean = 0;
+    }
+
     xTaskDelayUntil(&lastVelTick, pdMS_TO_TICKS(1));
   }
 }

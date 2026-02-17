@@ -1,7 +1,9 @@
 #include "usbSerial.h"
 
-UsbSerial::UsbSerial(QueueHandle_t _inMsgQueue, QueueHandle_t _outMsgQueue)
-    : inMsgQueue(_inMsgQueue), outMsgQueue(_outMsgQueue) {
+UsbSerial::UsbSerial(QueueHandle_t _inMsgQueue, QueueHandle_t _outMsgQueue,
+                     QueueHandle_t telTaskStatsQueue)
+    : inMsgQueue(_inMsgQueue), outMsgQueue(_outMsgQueue),
+      telTaskStatsQueue(telTaskStatsQueue) {
   ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
   ESP_ERROR_CHECK(uart_driver_install(uart_num, uart_buffer_size,
                                       uart_buffer_size, 0, NULL, 0));
@@ -14,9 +16,13 @@ void UsbSerial::write_task(void *arg) {
 
 void UsbSerial::write_task_loop() {
   lastTick = xTaskGetTickCount();
+  BaseType_t telTaskAvailable{pdFALSE};
   for (;;) {
     xQueueReceive(outMsgQueue, &outValues, 0);
+    telTaskAvailable = xQueueReceive(telTaskStatsQueue, &telTaskStats, 0);
     this->send_outMsg();
+    if (telTaskAvailable == pdTRUE)
+      this->send_telTaskStats();
     this->read_buffer();
     xTaskDelayUntil(&lastTick, pdMS_TO_TICKS(100));
   }
@@ -40,6 +46,19 @@ void UsbSerial::send_outMsg() {
   uint8_t packet[1 + sizeof(OutMsg) + 1];
   packet[0] = 0x01;
   memcpy(&packet[1], &outValues, sizeof(OutMsg));
+  uint8_t chk = 0;
+  for (size_t i = 0; i < 1 + sizeof(OutMsg); ++i)
+    chk ^= packet[i];
+  packet[1 + sizeof(OutMsg)] = chk;
+
+  uart_write_bytes(uart_num, reinterpret_cast<const char *>(packet),
+                   sizeof(packet));
+}
+
+void UsbSerial::send_telTaskStats() {
+  uint8_t packet[1 + sizeof(OutMsg) + 1];
+  packet[0] = 0x02;
+  memcpy(&packet[1], &telTaskStats, sizeof(OutMsg));
   uint8_t chk = 0;
   for (size_t i = 0; i < 1 + sizeof(OutMsg); ++i)
     chk ^= packet[i];
