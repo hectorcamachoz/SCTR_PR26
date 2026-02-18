@@ -2,14 +2,14 @@ idf_component_register(
     SRCS
         "main.cpp"
         "peripherials/encoder/encoder.cpp"
-        "peripherials/hbridge/hbridge.cpp"
+        "peripherials/motorcontrol/motorcontrol.cpp"
         "peripherials/usbserial/usbSerial.cpp"
         "peripherials/telemetry/telemetry.cpp"
         "peripherials/pid/pid.cpp"
     INCLUDE_DIRS
         "."
         "peripherials/encoder"
-        "peripherials/hbridge"
+        "peripherials/motorcontrol"
         "peripherials/usbserial"
         "peripherials/telemetry"
         "peripherials/pid"

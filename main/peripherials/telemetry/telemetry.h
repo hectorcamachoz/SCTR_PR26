@@ -12,21 +12,24 @@
 class Telemetry {
 private:
   Encoder *encoder;
-  float vel;
+  float vel{0};
   int64_t lastVelTime{0};
   int32_t lastPos{0};
+  int64_t lastExecTime{0};
 
   // RTOS Variables
   TickType_t lastVelTick{0};
   TaskHandle_t velHandler{nullptr};
   QueueHandle_t velQueue{nullptr};
   QueueHandle_t taskStatsQueue{nullptr};
+  QueueHandle_t loopTimeQueue{nullptr};
 
   struct {
     int32_t latMax{0};
-    int32_t latMin{0};
-    float meanJitter{0};
+    float meanLat{0};
+    float maxJitter{0};
     float stdJitter{0};
+    int32_t period{0};
   } taskStats;
 
   // RTOS Functions
@@ -35,7 +38,7 @@ private:
 
 public:
   Telemetry(Encoder *_encoder, QueueHandle_t _velQueue,
-            QueueHandle_t _statsQueue);
+            QueueHandle_t _statsQueue, QueueHandle_t loopTimeQueue);
   void start_vel_task();
   int get_vel();
   ~Telemetry();
